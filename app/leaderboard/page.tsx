@@ -1,5 +1,5 @@
 // app/leaderboard/page.tsx
-"use client"; // ⚠️ This makes the component a Client Component
+"use client";
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
