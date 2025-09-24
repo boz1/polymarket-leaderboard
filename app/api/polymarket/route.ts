@@ -1,25 +1,40 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
-  const { addresses } = await req.json();
+  let payload: { addresses?: string[] };
+  try {
+    payload = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
 
-  if (!addresses || !Array.isArray(addresses)) {
-    return NextResponse.json({ error: "Provide addresses array" }, { status: 400 });
+  const addresses = payload.addresses?.filter(Boolean) ?? [];
+  if (!addresses.length) {
+    return NextResponse.json([], { status: 200 });
   }
 
   try {
     const results = await Promise.all(
-      addresses.map(async (addr: string) => {
-        const res = await fetch(`https://data-api.polymarket.com/value?user=${addr}`);
-        const json = await res.json();
-        return { address: addr, value: json[0]?.value || 0 };
+      addresses.map(async (addr) => {
+        const url = `https://data-api.polymarket.com/value?user=${encodeURIComponent(
+          addr
+        )}`;
+        const res = await fetch(url, { cache: "no-store" });
+        if (!res.ok) throw new Error(`Polymarket API error: ${res.status}`);
+        const json = (await res.json()) as Array<{ user: string; value: number }>;
+        return { address: addr, value: json?.[0]?.value ?? 0 };
       })
     );
 
     results.sort((a, b) => b.value - a.value);
 
-    return NextResponse.json(results);
+    return NextResponse.json(results, {
+      headers: { "Cache-Control": "no-store" },
+    });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json(
+      { error: err?.message || "Failed to fetch values" },
+      { status: 502 }
+    );
   }
 }

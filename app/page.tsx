@@ -4,26 +4,29 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function HomePage() {
-  const [addresses, setAddresses] = useState([""]);
+  const [addresses, setAddresses] = useState<string[]>([""]);
   const router = useRouter();
 
   const handleChange = (idx: number, value: string) => {
-    const newAddresses = [...addresses];
-    newAddresses[idx] = value;
-    setAddresses(newAddresses);
+    setAddresses((prev) => {
+      const next = [...prev];
+      next[idx] = value.trim();
+      return next;
+    });
   };
 
-  const addField = () => setAddresses([...addresses, ""]);
+  const addField = () => setAddresses((prev) => [...prev, ""]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    router.push(`/leaderboard?addresses=${addresses.join(",")}`);
+    const qs = addresses.filter(Boolean).join(",");
+    router.push(`/leaderboard?addresses=${encodeURIComponent(qs)}`);
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl mb-4">Polymarket Leaderboard Maker</h1>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-2">
+    <div className="container mx-auto p-6 max-w-xl">
+      <h1 className="text-2xl font-semibold mb-4">Polymarket Leaderboard</h1>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         {addresses.map((addr, idx) => (
           <input
             key={idx}
@@ -34,16 +37,19 @@ export default function HomePage() {
             className="border p-2 rounded"
           />
         ))}
-        <div className="flex gap-2 mt-2">
+        <div className="flex gap-2">
           <button
             type="button"
             onClick={addField}
-            className="p-2 bg-green-500 text-white rounded"
+            className="px-3 py-2 rounded border"
           >
-            Add Address
+            Add address
           </button>
-          <button type="submit" className="p-2 bg-blue-500 text-white rounded">
-            Show Leaderboard
+          <button
+            type="submit"
+            className="px-3 py-2 rounded text-white bg-blue-600"
+          >
+            Show leaderboard
           </button>
         </div>
       </form>

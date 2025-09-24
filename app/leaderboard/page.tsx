@@ -1,57 +1,25 @@
+import { Suspense } from "react";
 // app/leaderboard/page.tsx
-"use client"; // ⚠️ This makes the entire page a client component
+import LeaderboardClient from "./LeaderboardClient"; // ✅ same folder, relative path
 
-import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+// Prevent static generation so we don't trip prerendering errors:
+export const dynamic = "force-dynamic";
 
-type Entry = { address: string; value: number };
+type PageProps = {
+  searchParams: { addresses?: string };
+};
 
-export default function LeaderboardPage() {
-  const searchParams = useSearchParams();
-  const addressesParam = searchParams?.get("addresses");
-  const [data, setData] = useState<Entry[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!addressesParam) return;
-
-    const addrArray = addressesParam.split(",");
-
-    fetch("/api/polymarket", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ addresses: addrArray }),
-    })
-      .then((res) => res.json())
-      .then((json) => {
-        setData(json);
-        setLoading(false);
-      });
-  }, [addressesParam]);
-
-  if (loading) return <p>Loading leaderboard...</p>;
+export default function LeaderboardPage({ searchParams }: PageProps) {
+  // Parse addresses on the SERVER (no client hook needed here)
+  const addressesParam = searchParams.addresses ?? "";
+  const initialAddresses = addressesParam
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl mb-4">Leaderboard</h1>
-      <table className="min-w-full border border-collapse">
-        <thead>
-          <tr>
-            <th className="border px-4 py-2">Rank</th>
-            <th className="border px-4 py-2">Address</th>
-            <th className="border px-4 py-2">Value</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.map((entry, idx) => (
-            <tr key={entry.address}>
-              <td className="border px-4 py-2">{idx + 1}</td>
-              <td className="border px-4 py-2">{entry.address}</td>
-              <td className="border px-4 py-2">{entry.value}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <Suspense fallback={<p className="p-6">Loading leaderboard…</p>}>
+      <LeaderboardClient initialAddresses={initialAddresses} />
+    </Suspense>
   );
 }
