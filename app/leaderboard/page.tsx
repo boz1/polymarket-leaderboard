@@ -1,22 +1,20 @@
 // app/leaderboard/page.tsx
-"use client";
+"use client"; // ⚠️ This makes the entire page a client component
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
-type Entry = {
-  address: string;
-  value: number;
-};
+type Entry = { address: string; value: number };
 
 export default function LeaderboardPage() {
   const searchParams = useSearchParams();
-  const addressesParam = searchParams.get("addresses");
+  const addressesParam = searchParams?.get("addresses");
   const [data, setData] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!addressesParam) return;
+
     const addrArray = addressesParam.split(",");
 
     fetch("/api/polymarket", {
