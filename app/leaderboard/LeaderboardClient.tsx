@@ -42,7 +42,13 @@ export default function LeaderboardClient({ initialAddresses }: Props) {
       });
   }, [initialAddresses]);
 
-  if (loading) return <p className="p-6">Loading leaderboard…</p>;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6">
+        <p className="text-center text-lg">Loading leaderboard…</p>
+      </div>
+    );
+  }
 
   if (errorMsg)
     return (
@@ -67,15 +73,30 @@ export default function LeaderboardClient({ initialAddresses }: Props) {
           <tr>
             <th className="border px-4 py-2 text-left">Rank</th>
             <th className="border px-4 py-2 text-left">Address</th>
-            <th className="border px-4 py-2 text-right">Value</th>
+            <th className="border px-4 py-2 text-right">Positions Value</th>
           </tr>
         </thead>
         <tbody>
           {data.map((entry, idx) => (
             <tr key={entry.address}>
               <td className="border px-4 py-2">{idx + 1}</td>
-              <td className="border px-4 py-2">{entry.address}</td>
-              <td className="border px-4 py-2 text-right">{entry.value}</td>
+              <td className="border px-4 py-2">
+                <a
+                  href={`https://polymarket.com/${entry.address}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline"
+                >
+                  {entry.address}
+                </a>
+              </td>
+              <td className="border px-4 py-2 text-right">
+                {new Intl.NumberFormat("en-US", {
+                  style: "currency",
+                  currency: "USD",
+                  maximumFractionDigits: 2,
+                }).format(entry.value)}
+              </td>
             </tr>
           ))}
         </tbody>
